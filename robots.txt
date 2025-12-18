@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# sitemap
+Sitemap: https://downy.funnyfunny.cloud/sitemap.xml
+

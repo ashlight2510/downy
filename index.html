@@ -1,13 +1,65 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="네온 아케이드 감성의 캐주얼 생존 게임. 좌우 가속/관성으로 계단을 내려가며 살아남으세요. 추락하면 즉사, 강한 착지엔 데미지, 20번 착지마다 HP 회복!"
+    />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="theme-color" content="#070815" />
+    <link rel="canonical" href="https://downy.funnyfunny.cloud/" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Neon Stairs Drop (Downy)" />
+    <meta
+      property="og:description"
+      content="네온 아케이드 감성 캐주얼 생존. 좌우 가속/관성으로 계단을 내려가며 버티세요."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://downy.funnyfunny.cloud/" />
+    <meta
+      property="og:image"
+      content="https://dummyimage.com/1200x630/1f2937/f9fafb&amp;text=Downy"
+    />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Neon Stairs Drop (Downy)" />
+    <meta
+      name="twitter:description"
+      content="네온 아케이드 감성 캐주얼 생존. 좌우 가속/관성으로 계단을 내려가며 버티세요."
+    />
+    <meta
+      name="twitter:image"
+      content="https://dummyimage.com/1200x630/1f2937/f9fafb&amp;text=Downy"
+    />
     <title>Neon Stairs Drop</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./style.css" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Neon Stairs Drop (Downy)",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web",
+        "description": "네온 아케이드 감성의 캐주얼 생존 게임. 좌우 가속/관성으로 계단을 내려가며 살아남으세요.",
+        "inLanguage": "ko-KR"
+      }
+    </script>
   </head>
   <body>
     <div class="bg"></div>
@@ -15,9 +67,18 @@
       <header class="hud">
         <div class="brand">NEON STAIRS</div>
         <div class="right">
-          <div class="pill"><span class="k">점수</span><span id="score" class="v">0</span></div>
-          <div class="pill"><span class="k">최고</span><span id="best" class="v">0</span></div>
-          <div class="pill"><span class="k">속도</span><span id="speed" class="v">0.0</span></div>
+          <div class="pill">
+            <span class="k">점수</span><span id="score" class="v">0</span>
+          </div>
+          <div class="pill">
+            <span class="k">HP</span><span id="hp" class="v">3</span>
+          </div>
+          <div class="pill">
+            <span class="k">최고</span><span id="best" class="v">0</span>
+          </div>
+          <div class="pill">
+            <span class="k">속도</span><span id="speed" class="v">0.0</span>
+          </div>
         </div>
       </header>
 
@@ -31,6 +92,22 @@
               <b>Space</b> : 시작/재시작<br />
               <b>Esc</b> : 일시정지
             </div>
+            <div class="rank" id="rank">
+              <div class="rankRow">
+                <div class="rankLabel">닉네임</div>
+                <input
+                  id="rankName"
+                  class="rankInput"
+                  maxlength="16"
+                  placeholder="예: downy"
+                />
+                <button id="rankSubmit" class="rankBtn">등록</button>
+              </div>
+              <div class="rankMeta">
+                <span id="rankStatus">랭킹 불러오는 중...</span>
+              </div>
+              <div class="rankList" id="rankList"></div>
+            </div>
             <button id="btnStart" class="btn">시작하기</button>
           </div>
         </div>
@@ -38,11 +115,22 @@
       </main>
 
       <footer class="foot">
-        계단 1칸당 1점 · 랜덤 길이 생성 · 추락하면 사망
+        <div class="footText">
+          계단 1칸당 1점 · 랜덤 길이 생성 · 추락하면 사망
+        </div>
+        <a
+          class="outLink"
+          href="https://funnyfunny.cloud/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          다른 서비스 보기
+        </a>
       </footer>
     </div>
 
+    <!-- Supabase (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./game.js"></script>
   </body>
 </html>
-

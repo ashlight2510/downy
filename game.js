@@ -4,11 +4,126 @@ const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d', { alpha: true });
 
 const elScore = document.getElementById('score');
+const elHp = document.getElementById('hp');
 const elBest = document.getElementById('best');
 const elSpeed = document.getElementById('speed');
 const overlay = document.getElementById('overlay');
 const btnStart = document.getElementById('btnStart');
 const toast = document.getElementById('toast');
+const rankName = document.getElementById('rankName');
+const rankSubmit = document.getElementById('rankSubmit');
+const rankStatus = document.getElementById('rankStatus');
+const rankList = document.getElementById('rankList');
+
+// --- Supabase leaderboard (table: run) ---
+// NOTE: anon key는 "공개 키"지만, 그래도 깃허브 공개 저장소에 올릴 땐 분리 권장.
+const SUPABASE_URL = 'https://mawljjaittsnoyotxqhm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hd2xqamFpdHRzbm95b3R4cWhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwMjIwNTgsImV4cCI6MjA4MTU5ODA1OH0.jzF9IqDtx6hcHwaWfjaT6GvG2jE7lotSaQMUdnRhaAM';
+const RUN_TABLE = 'rankings_downy';
+// 아래 컬럼명이 실제 테이블과 다르면 여기만 바꾸면 됨
+const COL = {
+  name: 'name',
+  score: 'score',
+  createdAt: 'created_at',
+};
+const sb = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+function normName(s) {
+  return String(s || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 16);
+}
+function loadName() {
+  const v = localStorage.getItem('neonStairsName') || '';
+  return normName(v);
+}
+function saveName(v) {
+  try { localStorage.setItem('neonStairsName', normName(v)); } catch {}
+}
+rankName.value = loadName();
+
+async function fetchTopRuns(limit = 20) {
+  if (!sb) return { ok: false, message: 'Supabase 로드 실패(네트워크/차단 확인)' };
+  rankStatus.textContent = '랭킹 불러오는 중...';
+  try {
+    const { data, error } = await sb
+      .from(RUN_TABLE)
+      .select(`${COL.name},${COL.score},${COL.createdAt}`)
+      .order(COL.score, { ascending: false })
+      .order(COL.createdAt, { ascending: true })
+      .limit(limit);
+    if (error) throw error;
+    renderRanking(Array.isArray(data) ? data : []);
+    rankStatus.textContent = `TOP ${limit}`;
+    return { ok: true };
+  } catch (e) {
+    const msg = e?.message || String(e);
+    rankStatus.textContent = `랭킹 로드 실패: ${msg}`;
+    renderRanking([]);
+    return { ok: false, message: msg };
+  }
+}
+
+function renderRanking(rows) {
+  rankList.innerHTML = '';
+  if (!rows || rows.length === 0) {
+    const div = document.createElement('div');
+    div.style.color = 'rgba(159,179,211,.85)';
+    div.style.fontSize = '11px';
+    div.style.letterSpacing = '.02em';
+    div.textContent = '표시할 랭킹이 없어요. 첫 기록을 남겨봐!';
+    rankList.appendChild(div);
+    return;
+  }
+  rows.forEach((r, i) => {
+    const item = document.createElement('div');
+    item.className = 'rankItem';
+
+    const left = document.createElement('div');
+    left.className = 'rankLeft';
+    const pos = document.createElement('div');
+    pos.className = 'rankPos';
+    pos.textContent = `#${i + 1}`;
+    const nm = document.createElement('div');
+    nm.className = 'rankName';
+    nm.textContent = normName(r?.[COL.name]) || 'noname';
+    left.appendChild(pos);
+    left.appendChild(nm);
+
+    const sc = document.createElement('div');
+    sc.className = 'rankScore';
+    sc.textContent = String(r?.[COL.score] ?? 0);
+
+    item.appendChild(left);
+    item.appendChild(sc);
+    rankList.appendChild(item);
+  });
+}
+
+async function submitRun(name, score) {
+  if (!sb) return { ok: false, message: 'Supabase 로드 실패' };
+  const n = normName(name);
+  if (!n) return { ok: false, message: '닉네임을 입력해줘' };
+  rankSubmit.disabled = true;
+  try {
+    const payload = { [COL.name]: n, [COL.score]: score };
+    const { error } = await sb.from(RUN_TABLE).insert(payload);
+    if (error) throw error;
+    saveName(n);
+    toastMsg('랭킹 등록 완료!', 900);
+    await fetchTopRuns(20);
+    return { ok: true };
+  } catch (e) {
+    const msg = e?.message || String(e);
+    toastMsg(`등록 실패: ${msg}`, 1400);
+    return { ok: false, message: msg };
+  } finally {
+    rankSubmit.disabled = false;
+  }
+}
 
 const DPR = () => Math.max(1, Math.min(2, window.devicePixelRatio || 1));
 
@@ -44,9 +159,11 @@ const TUNE = {
   stepThickness: 10,
   playerR: 9,
   gravity: 1900,
-  baseScroll: 340,     // 아래로 내려가는 속도(초반)
-  scrollAccel: 28,     // 시간이 지날수록 가속
-  maxScroll: 980,
+  // 초반 더 쉽고, 후반 덜 하드코어: 기본 속도↓, 가속↓, 최대 속도↓
+  // 요청: 현재 체감의 1/5 수준으로
+  baseScroll: 60,      // 아래로 내려가는 속도(초반)
+  scrollAccel: 4,      // 시간이 지날수록 가속
+  maxScroll: 164,
 
   // 좌우 조작 감
   moveAccel: 2600,
@@ -60,9 +177,26 @@ const TUNE = {
   // 난이도
   minStepLenCells: 5,
   maxStepLenCells: 18,
-  minGapCells: 3,
-  maxGapCells: 11,
+  // 시작엔 계단이 적게(간격 큼) → 점점 많아지게(간격 감소)
+  // 초반을 더 쉽게: 시작 간격 크게
+  gapStartMinCells: 10,
+  gapStartMaxCells: 16,
+  // 후반을 덜 하드코어: 끝 간격도 너무 촘촘해지지 않게
+  gapEndMinCells: 7,
+  gapEndMaxCells: 12,
+
+  // HP 룰
+  maxHp: 3,
+  healEveryLandings: 20, // 착지한 계단 20개마다 1 회복
 };
+
+function difficulty01(t) {
+  // 0..1 : 초반(0)엔 느긋/드문 계단, 1에 가까워질수록 촘촘/압박
+  // 초반은 더 오래 캐주얼, 후반도 너무 급격히 안 올라가게 완만한 곡선
+  const x = clamp(t / 70, 0, 1);
+  // smoothstep-ish (완만하게 증가)
+  return x * x * (3 - 2 * x);
+}
 
 // --- Input ---
 const input = {
@@ -113,6 +247,17 @@ canvas.addEventListener('pointercancel', () => {
 }, { passive: true });
 
 btnStart.addEventListener('click', () => startOrRestart());
+rankSubmit.addEventListener('click', async () => {
+  if (!state.dead) return;
+  await submitRun(rankName.value, state.score);
+});
+rankName.addEventListener('keydown', async (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (!state.dead) return;
+    await submitRun(rankName.value, state.score);
+  }
+});
 
 // --- State ---
 const state = {
@@ -125,6 +270,9 @@ const state = {
   score: 0,
   best: loadBest(),
   scoreCellsAcc: 0, // 내려간 거리 누적(칸 단위로 점수 증가)
+  hp: 3,
+  landings: 0,
+  nextHealAt: 20,
 };
 elBest.textContent = String(state.best);
 
@@ -140,6 +288,7 @@ const player = {
 // Stairs: each has y, x0, x1, cells, hue
 let stairs = [];
 let particles = [];
+let stairIdSeq = 1;
 
 function resetWorld() {
   state.t = 0;
@@ -147,6 +296,9 @@ function resetWorld() {
   state.scrollV = TUNE.baseScroll;
   state.score = 0;
   state.scoreCellsAcc = 0;
+  state.hp = TUNE.maxHp;
+  state.landings = 0;
+  state.nextHealAt = TUNE.healEveryLandings;
   state.dead = false;
   state.paused = false;
 
@@ -159,25 +311,36 @@ function resetWorld() {
 
   stairs = [];
   particles = [];
+  stairIdSeq = 1;
 
   // seed some stairs
-  let y = H * 0.35;
+  // 시작 즉사 방지: 플레이어 바로 아래에 "안전 계단" 하나를 강제 배치
+  const cellsW = Math.floor(W / TUNE.laneWidth);
+  const safeLen = irand(10, 14);
+  const safeCellX = clamp(Math.floor((player.x / TUNE.laneWidth) - safeLen / 2), 1, cellsW - safeLen - 1);
+  addStair(player.y + 70, safeCellX, safeLen);
+
+  let y = player.y + 70 + TUNE.stepHeight * irand(2, 3);
   let x = irand(2, Math.floor(W / TUNE.laneWidth) - 10);
   let dir = Math.random() < 0.5 ? -1 : 1;
-  for (let i = 0; i < 18; i++) {
+  // 초반엔 계단이 "적어 보이게" 시드 수를 줄이고, 세로 간격을 넓게 둠
+  for (let i = 0; i < 8; i++) {
     const len = irand(TUNE.minStepLenCells + 2, TUNE.maxStepLenCells - 2);
-    const cellsW = Math.floor(W / TUNE.laneWidth);
     x = clamp(x + dir * irand(2, 6), 1, cellsW - len - 1);
     addStair(y, x, len);
-    y += TUNE.stepHeight;
+    // 초반 텀은 "먼 느낌" 없게 너무 벌리지 않음
+    y += TUNE.stepHeight * irand(2, 3);
     if (Math.random() < 0.35) dir *= -1;
   }
+
+  elHp.textContent = String(state.hp);
 }
 
 function addStair(y, cellX, lenCells) {
   const x0 = cellX * TUNE.laneWidth;
   const x1 = (cellX + lenCells) * TUNE.laneWidth;
   stairs.push({
+    id: stairIdSeq++,
     y,
     x0,
     x1,
@@ -193,13 +356,16 @@ function ensureStairs() {
   for (const s of stairs) maxY = Math.max(maxY, s.y);
   if (!Number.isFinite(maxY)) maxY = 0;
 
+  const d = difficulty01(state.t);
   const cellsW = Math.floor(W / TUNE.laneWidth);
   while (maxY < H + 240) {
     const prev = stairs[stairs.length - 1];
     const prevCenter = prev ? (prev.x0 + prev.x1) * 0.5 : W * 0.5;
     const prevCell = Math.floor(prevCenter / TUNE.laneWidth);
 
-    const gap = irand(TUNE.minGapCells, TUNE.maxGapCells);
+    const gapMin = Math.round(lerp(TUNE.gapStartMinCells, TUNE.gapEndMinCells, d));
+    const gapMax = Math.round(lerp(TUNE.gapStartMaxCells, TUNE.gapEndMaxCells, d));
+    const gap = irand(gapMin, Math.max(gapMin, gapMax));
     const y = maxY + gap * (TUNE.stepHeight * 0.35) + TUNE.stepHeight;
 
     const len = irand(TUNE.minStepLenCells, TUNE.maxStepLenCells);
@@ -225,7 +391,7 @@ function startOrRestart() {
   toastMsg('가속을 느껴봐. 좌우로 드리프트!');
 }
 
-function gameOver() {
+function gameOver(reason = '') {
   state.dead = true;
   state.running = false;
   if (state.score > state.best) {
@@ -235,9 +401,12 @@ function gameOver() {
   }
   overlay.classList.remove('hidden');
   overlay.querySelector('.title').textContent = 'GAME OVER';
+  const r = reason ? `사유: <b>${reason}</b><br/>` : '';
   overlay.querySelector('.sub').innerHTML =
-    `점수: <b>${state.score}</b> · 최고: <b>${state.best}</b><br/>Space 또는 버튼으로 재시작`;
+    `${r}점수: <b>${state.score}</b> · 최고: <b>${state.best}</b><br/>Space 또는 버튼으로 재시작`;
   btnStart.textContent = '다시하기';
+  // 랭킹 로드(백그라운드)
+  fetchTopRuns(20);
 }
 
 function togglePause() {
@@ -332,8 +501,10 @@ function update(dt) {
   }
 
   // ground check against stairs
+  const wasOnGround = player.onGround;
   player.onGround = false;
   let groundY = Infinity;
+  let groundStair = null;
   for (const s of stairs) {
     // stair top surface y = s.y
     const withinX = player.x >= s.x0 - TUNE.playerR && player.x <= s.x1 + TUNE.playerR;
@@ -341,16 +512,45 @@ function update(dt) {
     const dy = (player.y + TUNE.playerR) - s.y;
     // only collide when falling and near the top
     if (player.vy >= 0 && dy >= -16 && dy <= 18) {
-      groundY = Math.min(groundY, s.y);
+      if (s.y < groundY) {
+        groundY = s.y;
+        groundStair = s;
+      }
     }
   }
 
   if (groundY !== Infinity) {
+    // 충돌 데미지: "화면 1/3 높이에서 떨어진" 정도의 속도 이상으로 착지하면 HP 감소
+    const fallH = H / 3;
+    const impactV = player.vy; // 착지 직전 속도
+    const dmgThreshold = Math.sqrt(2 * TUNE.gravity * fallH);
+    if (impactV >= dmgThreshold) {
+      state.hp -= 1;
+      spawnBurst(player.x, groundY - 4, 0);
+      toastMsg('충격! HP -1', 900);
+      if (state.hp <= 0) {
+        elHp.textContent = '0';
+        gameOver('HP 0');
+        return;
+      }
+    }
     // snap to ground
     player.y = groundY - TUNE.playerR;
     player.vy = 0;
     player.onGround = true;
     player.coyote = TUNE.coyoteTime;
+
+    // 착지 카운트 + 회복(20개마다)
+    if (!wasOnGround && groundStair) {
+      state.landings += 1;
+      if (state.landings >= state.nextHealAt) {
+        if (state.hp < TUNE.maxHp) {
+          state.hp += 1;
+          toastMsg('HP 회복 +1', 800);
+        }
+        state.nextHealAt += TUNE.healEveryLandings;
+      }
+    }
   } else {
     player.coyote = Math.max(0, player.coyote - dt);
   }
@@ -371,11 +571,20 @@ function update(dt) {
   // death: fall below bottom (missed stairs)
   if (player.y > H + 70) {
     spawnBurst(player.x, H - 40, 350);
-    gameOver();
+    gameOver('추락');
+    return;
+  }
+
+  // death: off the top (천장에 박음 / 공이 안 보이면 사망)
+  if (player.y < -80) {
+    spawnBurst(player.x, 40, 200);
+    gameOver('천장');
+    return;
   }
 
   // HUD
   elScore.textContent = String(state.score);
+  elHp.textContent = String(state.hp);
   elSpeed.textContent = String((state.scrollV / 100).toFixed(1));
 }
 
@@ -495,6 +704,7 @@ function tick(now) {
 resize();
 resetWorld();
 requestAnimationFrame(tick);
+fetchTopRuns(20);
 
 // initial overlay text
 overlay.querySelector('.title').textContent = 'NEON STAIRS DROP';
