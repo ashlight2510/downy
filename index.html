@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Neon Stairs Drop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="bg"></div>
+    <div class="wrap">
+      <header class="hud">
+        <div class="brand">NEON STAIRS</div>
+        <div class="right">
+          <div class="pill"><span class="k">점수</span><span id="score" class="v">0</span></div>
+          <div class="pill"><span class="k">최고</span><span id="best" class="v">0</span></div>
+          <div class="pill"><span class="k">속도</span><span id="speed" class="v">0.0</span></div>
+        </div>
+      </header>
+
+      <main class="stage">
+        <canvas id="c"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="panel">
+            <div class="title">NEON STAIRS DROP</div>
+            <div class="sub">
+              <b>A/D</b> 또는 <b>←/→</b> : 좌우 이동 (가속/관성)<br />
+              <b>Space</b> : 시작/재시작<br />
+              <b>Esc</b> : 일시정지
+            </div>
+            <button id="btnStart" class="btn">시작하기</button>
+          </div>
+        </div>
+        <div class="toast" id="toast"></div>
+      </main>
+
+      <footer class="foot">
+        계단 1칸당 1점 · 랜덤 길이 생성 · 추락하면 사망
+      </footer>
+    </div>
+
+    <script src="./game.js"></script>
+  </body>
+</html>
+
