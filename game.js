@@ -46,8 +46,9 @@ function saveName(v) {
 rankName.value = loadName();
 
 async function fetchTopRuns(limit = 20) {
-  if (!sb) return { ok: false, message: 'Supabase 로드 실패(네트워크/차단 확인)' };
-  rankStatus.textContent = '랭킹 불러오는 중...';
+  const t = window.t || ((key, vars = {}) => key);
+  if (!sb) return { ok: false, message: t('errorSupabase') };
+  rankStatus.textContent = t('loadingRanking');
   try {
     const { data, error } = await sb
       .from(RUN_TABLE)
@@ -57,24 +58,25 @@ async function fetchTopRuns(limit = 20) {
       .limit(limit);
     if (error) throw error;
     renderRanking(Array.isArray(data) ? data : []);
-    rankStatus.textContent = `TOP ${limit}`;
+    rankStatus.textContent = t('rankingTop', { limit });
     return { ok: true };
   } catch (e) {
     const msg = e?.message || String(e);
-    rankStatus.textContent = `랭킹 로드 실패: ${msg}`;
+    rankStatus.textContent = t('rankingLoadFail', { msg });
     renderRanking([]);
     return { ok: false, message: msg };
   }
 }
 
 function renderRanking(rows) {
+  const t = window.t || ((key, vars = {}) => key);
   rankList.innerHTML = '';
   if (!rows || rows.length === 0) {
     const div = document.createElement('div');
     div.style.color = 'rgba(159,179,211,.85)';
     div.style.fontSize = '11px';
     div.style.letterSpacing = '.02em';
-    div.textContent = '표시할 랭킹이 없어요. 첫 기록을 남겨봐!';
+    div.textContent = t('rankingEmpty');
     rankList.appendChild(div);
     return;
   }
@@ -104,21 +106,22 @@ function renderRanking(rows) {
 }
 
 async function submitRun(name, score) {
-  if (!sb) return { ok: false, message: 'Supabase 로드 실패' };
+  const t = window.t || ((key, vars = {}) => key);
+  if (!sb) return { ok: false, message: t('errorSupabaseShort') };
   const n = normName(name);
-  if (!n) return { ok: false, message: '닉네임을 입력해줘' };
+  if (!n) return { ok: false, message: t('errorNoNickname') };
   rankSubmit.disabled = true;
   try {
     const payload = { [COL.name]: n, [COL.score]: score };
     const { error } = await sb.from(RUN_TABLE).insert(payload);
     if (error) throw error;
     saveName(n);
-    toastMsg('랭킹 등록 완료!', 900);
+    toastMsg(t('toastRankSuccess'), 900);
     await fetchTopRuns(20);
     return { ok: true };
   } catch (e) {
     const msg = e?.message || String(e);
-    toastMsg(`등록 실패: ${msg}`, 1400);
+    toastMsg(t('toastRankFail', { msg }), 1400);
     return { ok: false, message: msg };
   } finally {
     rankSubmit.disabled = false;
@@ -399,20 +402,23 @@ function gameOver(reason = '') {
     saveBest(state.best);
     elBest.textContent = String(state.best);
   }
+  const t = window.t || ((key, vars = {}) => key);
   overlay.classList.remove('hidden');
-  overlay.querySelector('.title').textContent = 'GAME OVER';
-  const r = reason ? `사유: <b>${reason}</b><br/>` : '';
+  overlay.querySelector('.title').textContent = t('gameOver');
+  const reasonText = reason === '추락' ? t('reasonFall') : reason === '천장' ? t('reasonCeiling') : reason === 'HP 0' ? t('reasonHpZero') : reason;
+  const r = reason ? t('gameOverReason', { reason: reasonText }) : '';
   overlay.querySelector('.sub').innerHTML =
-    `${r}점수: <b>${state.score}</b> · 최고: <b>${state.best}</b><br/>Space 또는 버튼으로 재시작`;
-  btnStart.textContent = '다시하기';
+    r + t('gameOverScore', { score: state.score, best: state.best });
+  btnStart.textContent = t('btnRestart');
   // 랭킹 로드(백그라운드)
   fetchTopRuns(20);
 }
 
 function togglePause() {
+  const t = window.t || ((key, vars = {}) => key);
   if (!state.running) return;
   state.paused = !state.paused;
-  toastMsg(state.paused ? '일시정지' : '재개');
+  toastMsg(state.paused ? t('toastPause') : t('toastResume'));
 }
 
 // --- Particles ---
@@ -525,9 +531,10 @@ function update(dt) {
     const impactV = player.vy; // 착지 직전 속도
     const dmgThreshold = Math.sqrt(2 * TUNE.gravity * fallH);
     if (impactV >= dmgThreshold) {
+      const t = window.t || ((key, vars = {}) => key);
       state.hp -= 1;
       spawnBurst(player.x, groundY - 4, 0);
-      toastMsg('충격! HP -1', 900);
+      toastMsg(t('toastImpact'), 900);
       if (state.hp <= 0) {
         elHp.textContent = '0';
         gameOver('HP 0');
@@ -544,9 +551,10 @@ function update(dt) {
     if (!wasOnGround && groundStair) {
       state.landings += 1;
       if (state.landings >= state.nextHealAt) {
+        const t = window.t || ((key, vars = {}) => key);
         if (state.hp < TUNE.maxHp) {
           state.hp += 1;
-          toastMsg('HP 회복 +1', 800);
+          toastMsg(t('toastHeal'), 800);
         }
         state.nextHealAt += TUNE.healEveryLandings;
       }
@@ -707,7 +715,8 @@ requestAnimationFrame(tick);
 fetchTopRuns(20);
 
 // initial overlay text
-overlay.querySelector('.title').textContent = 'NEON STAIRS DROP';
-btnStart.textContent = '시작하기';
+const t = window.t || ((key, vars = {}) => key);
+overlay.querySelector('.title').textContent = t('title');
+btnStart.textContent = t('btnStart');
 
 

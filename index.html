@@ -98,23 +98,67 @@
         text-align: center;
 }
   </style>
+  <style>
+    .lang-switch {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      display: inline-flex;
+      gap: 0;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(7, 8, 21, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .lang-switch button {
+      border: none;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 44px;
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+    .lang-switch button.active {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
+    }
+    .lang-switch button:not(.active):hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.9);
+    }
+  </style>
 </head>
-  <body><div class="bg"></div>
+  <body>
+  <div class="lang-switch" role="tablist" aria-label="Language switcher">
+    <button type="button" data-lang="ko" class="active">KR</button>
+    <button type="button" data-lang="en">EN</button>
+  </div>
+  <div class="bg"></div>
     <div class="wrap">
       <header class="hud">
         <div class="brand">NEON STAIRS</div>
         <div class="right">
           <div class="pill">
-            <span class="k">점수</span><span id="score" class="v">0</span>
+            <span class="k" data-i18n="labelScore">점수</span><span id="score" class="v">0</span>
           </div>
           <div class="pill">
             <span class="k">HP</span><span id="hp" class="v">3</span>
           </div>
           <div class="pill">
-            <span class="k">최고</span><span id="best" class="v">0</span>
+            <span class="k" data-i18n="labelBest">최고</span><span id="best" class="v">0</span>
           </div>
           <div class="pill">
-            <span class="k">속도</span><span id="speed" class="v">0.0</span>
+            <span class="k" data-i18n="labelSpeed">속도</span><span id="speed" class="v">0.0</span>
           </div>
         </div>
       </header>
@@ -123,36 +167,36 @@
         <canvas id="c"></canvas>
         <div class="overlay" id="overlay">
           <div class="panel">
-            <div class="title">NEON STAIRS DROP</div>
-            <div class="sub">
+            <div class="title" data-i18n="title">NEON STAIRS DROP</div>
+            <div class="sub" data-i18n-html="instructions">
               <b>A/D</b> 또는 <b>←/→</b> : 좌우 이동 (가속/관성)<br />
               <b>Space</b> : 시작/재시작<br />
               <b>Esc</b> : 일시정지
             </div>
             <div class="rank" id="rank">
               <div class="rankRow">
-                <div class="rankLabel">닉네임</div>
+                <div class="rankLabel" data-i18n="labelNickname">닉네임</div>
                 <input
                   id="rankName"
                   class="rankInput"
                   maxlength="16"
-                  placeholder="예: downy"
+                  data-i18n-placeholder="placeholderNickname"
                 />
-                <button id="rankSubmit" class="rankBtn">등록</button>
+                <button id="rankSubmit" class="rankBtn" data-i18n="btnSubmit">등록</button>
               </div>
               <div class="rankMeta">
-                <span id="rankStatus">랭킹 불러오는 중...</span>
+                <span id="rankStatus" data-i18n="loadingRanking">랭킹 불러오는 중...</span>
               </div>
               <div class="rankList" id="rankList"></div>
             </div>
-            <button id="btnStart" class="btn">시작하기</button>
+            <button id="btnStart" class="btn" data-i18n="btnStart">시작하기</button>
           </div>
         </div>
         <div class="toast" id="toast"></div>
       </main>
 
       <footer class="foot">
-        <div class="footText">
+        <div class="footText" data-i18n="footerText">
           계단 1칸당 1점 · 랜덤 길이 생성 · 추락하면 사망
         </div>
         <a
@@ -160,6 +204,7 @@
           href="https://funnyfunny.cloud/"
           target="_blank"
           rel="noopener noreferrer"
+          data-i18n="linkOtherService"
         >
           다른 서비스 보기
         </a>
@@ -168,6 +213,173 @@
 
     <!-- Supabase (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      // =========================
+      // i18n
+      // =========================
+      const translations = {
+        ko: {
+          metaTitle: "Neon Stairs Drop",
+          metaDescription: "네온 아케이드 감성의 캐주얼 생존 게임. 좌우 가속/관성으로 계단을 내려가며 살아남으세요. 추락하면 즉사, 강한 착지엔 데미지, 20번 착지마다 HP 회복!",
+          title: "NEON STAIRS DROP",
+          instructions: "<b>A/D</b> 또는 <b>←/→</b> : 좌우 이동 (가속/관성)<br /><b>Space</b> : 시작/재시작<br /><b>Esc</b> : 일시정지",
+          labelScore: "점수",
+          labelBest: "최고",
+          labelSpeed: "속도",
+          labelNickname: "닉네임",
+          placeholderNickname: "예: downy",
+          btnSubmit: "등록",
+          btnStart: "시작하기",
+          btnRestart: "다시하기",
+          loadingRanking: "랭킹 불러오는 중...",
+          linkOtherService: "다른 서비스 보기",
+          footerText: "계단 1칸당 1점 · 랜덤 길이 생성 · 추락하면 사망",
+          gameOver: "GAME OVER",
+          gameOverReason: "사유: <b>{reason}</b><br/>",
+          gameOverScore: "점수: <b>{score}</b> · 최고: <b>{best}</b><br/>Space 또는 버튼으로 재시작",
+          toastPause: "일시정지",
+          toastResume: "재개",
+          toastImpact: "충격! HP -1",
+          toastHeal: "HP 회복 +1",
+          toastRankSuccess: "랭킹 등록 완료!",
+          toastRankFail: "등록 실패: {msg}",
+          reasonFall: "추락",
+          reasonCeiling: "천장",
+          reasonHpZero: "HP 0",
+          errorSupabase: "Supabase 로드 실패(네트워크/차단 확인)",
+          errorSupabaseShort: "Supabase 로드 실패",
+          errorNoNickname: "닉네임을 입력해줘",
+          rankingTop: "TOP {limit}",
+          rankingLoadFail: "랭킹 로드 실패: {msg}",
+          rankingEmpty: "표시할 랭킹이 없어요. 첫 기록을 남겨봐!",
+        },
+        en: {
+          metaTitle: "Neon Stairs Drop",
+          metaDescription: "Neon arcade-style casual survival game. Survive by descending stairs with left/right acceleration/inertia. Fall = instant death, hard landing = damage, HP recovery every 20 landings!",
+          title: "NEON STAIRS DROP",
+          instructions: "<b>A/D</b> or <b>←/→</b> : Move left/right (acceleration/inertia)<br /><b>Space</b> : Start/restart<br /><b>Esc</b> : Pause",
+          labelScore: "Score",
+          labelBest: "Best",
+          labelSpeed: "Speed",
+          labelNickname: "Nickname",
+          placeholderNickname: "e.g., downy",
+          btnSubmit: "Submit",
+          btnStart: "Start",
+          btnRestart: "Restart",
+          loadingRanking: "Loading ranking...",
+          linkOtherService: "View other services",
+          footerText: "1 point per step · Random length generation · Fall = death",
+          gameOver: "GAME OVER",
+          gameOverReason: "Reason: <b>{reason}</b><br/>",
+          gameOverScore: "Score: <b>{score}</b> · Best: <b>{best}</b><br/>Press Space or button to restart",
+          toastPause: "Paused",
+          toastResume: "Resumed",
+          toastImpact: "Impact! HP -1",
+          toastHeal: "HP recovered +1",
+          toastRankSuccess: "Ranking submitted!",
+          toastRankFail: "Submission failed: {msg}",
+          reasonFall: "Fall",
+          reasonCeiling: "Ceiling",
+          reasonHpZero: "HP 0",
+          errorSupabase: "Supabase load failed (check network/block)",
+          errorSupabaseShort: "Supabase load failed",
+          errorNoNickname: "Please enter a nickname",
+          rankingTop: "TOP {limit}",
+          rankingLoadFail: "Ranking load failed: {msg}",
+          rankingEmpty: "No ranking to display. Be the first to set a record!",
+        },
+      };
+
+      const defaultLang = "ko";
+      const supportedLangs = ["ko", "en"];
+      let currentLang = defaultLang;
+
+      function t(key, vars = {}) {
+        const langTable = translations[currentLang] || translations.ko;
+        let template = langTable?.[key] ?? translations.ko?.[key] ?? key;
+        if (typeof template !== "string") return template;
+        Object.keys(vars).forEach((k) => {
+          template = template.replace(new RegExp(`\\{${k}\\}`, "g"), vars[k]);
+        });
+        return template;
+      }
+
+      function applyTranslations() {
+        document.title = t("metaTitle");
+        const descMeta = document.querySelector('meta[name="description"]');
+        if (descMeta) descMeta.setAttribute("content", t("metaDescription"));
+        const ogTitleMeta = document.querySelector('meta[property="og:title"]');
+        if (ogTitleMeta) ogTitleMeta.setAttribute("content", t("metaTitle"));
+        const ogDescMeta = document.querySelector('meta[property="og:description"]');
+        if (ogDescMeta) ogDescMeta.setAttribute("content", t("metaDescription"));
+        const twitterTitleMeta = document.querySelector('meta[name="twitter:title"]');
+        if (twitterTitleMeta) twitterTitleMeta.setAttribute("content", t("metaTitle"));
+        const twitterDescMeta = document.querySelector('meta[name="twitter:description"]');
+        if (twitterDescMeta) twitterDescMeta.setAttribute("content", t("metaDescription"));
+        document.documentElement.lang = currentLang;
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          el.textContent = t(el.dataset.i18n);
+        });
+        document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+          el.innerHTML = t(el.dataset.i18nHtml);
+        });
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+          el.placeholder = t(el.dataset.i18nPlaceholder);
+        });
+      }
+
+      function detectLang() {
+        const params = new URLSearchParams(window.location.search);
+        const paramLang = params.get("lang");
+        if (supportedLangs.includes(paramLang)) return paramLang;
+        const stored = localStorage.getItem("preferredLang");
+        if (supportedLangs.includes(stored)) return stored;
+        const intlLocale =
+          typeof Intl === "object" && typeof Intl.DateTimeFormat === "function"
+            ? Intl.DateTimeFormat().resolvedOptions().locale
+            : "";
+        const sources = [
+          ...(navigator.languages || []),
+          navigator.language,
+          navigator.userLanguage,
+          intlLocale,
+        ]
+          .filter(Boolean)
+          .map((locale) => locale.toLowerCase());
+        const hasKorean = sources.some((locale) => locale.startsWith("ko"));
+        return hasKorean ? "ko" : "en";
+      }
+
+      function setLang(lang, options = {}) {
+        const nextLang = supportedLangs.includes(lang) ? lang : defaultLang;
+        currentLang = nextLang;
+        window.currentLang = currentLang;
+        document.documentElement.lang = nextLang;
+        localStorage.setItem("preferredLang", nextLang);
+        document.querySelectorAll(".lang-switch button").forEach((button) => {
+          button.classList.toggle("active", button.dataset.lang === nextLang);
+        });
+        applyTranslations();
+        if (options.updateUrl) {
+          const url = new URL(window.location.href);
+          url.searchParams.set("lang", nextLang);
+          window.history.replaceState({}, "", url);
+        }
+      }
+
+      document.querySelectorAll(".lang-switch button").forEach((button) => {
+        button.addEventListener("click", () => {
+          setLang(button.dataset.lang, { updateUrl: true });
+        });
+      });
+
+      setLang(detectLang(), { updateUrl: false });
+
+      // Make t() function and currentLang globally available
+      window.t = t;
+      window.currentLang = currentLang;
+      window.setLang = setLang;
+    </script>
     <script src="./game.js"></script>
   
 <ins class="adsbygoogle"
