@@ -47,7 +47,11 @@ rankName.value = loadName();
 
 async function fetchTopRuns(limit = 20) {
   const t = window.t || ((key, vars = {}) => key);
-  if (!sb) return { ok: false, message: t('errorSupabase') };
+  if (!sb) {
+    rankStatus.textContent = t('rankingLoadFail', { msg: t('errorSupabase') });
+    renderRanking([]);
+    return { ok: false, message: t('errorSupabase') };
+  }
   rankStatus.textContent = t('loadingRanking');
   try {
     const { data, error } = await sb
