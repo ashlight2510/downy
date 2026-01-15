@@ -216,7 +216,21 @@ canvas#c{
     0 0 30px rgba(18,247,255,.18),
     0 0 34px rgba(255,43,214,.16);
 }
+.btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+  box-shadow:none;
+}
 .btn:active{transform: translateY(1px)}
+
+.overlay-ad{
+  margin: 12px 0 14px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(7,10,24,.55);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+}
 
 .rank{
   margin: 12px 0 14px;
@@ -361,5 +375,4 @@ canvas#c{
   .foot{flex-wrap:wrap; justify-content:center; text-align:center}
   .footText{flex:1 0 100%; text-align:center}
 }
-
 

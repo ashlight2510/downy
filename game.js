@@ -14,6 +14,11 @@ const rankName = document.getElementById('rankName');
 const rankSubmit = document.getElementById('rankSubmit');
 const rankStatus = document.getElementById('rankStatus');
 const rankList = document.getElementById('rankList');
+const overlayAd = document.getElementById('overlayAd');
+
+const RESTART_DELAY_MS = 2000;
+let restartUnlockAt = 0;
+let restartTimer = null;
 
 // --- Supabase leaderboard (table: run) ---
 // NOTE: anon key는 "공개 키"지만, 그래도 깃허브 공개 저장소에 올릴 땐 분리 권장.
@@ -390,8 +395,41 @@ function toastMsg(msg, ms = 1100) {
   toastMsg._t = window.setTimeout(() => toast.classList.remove('show'), ms);
 }
 
+function loadOverlayAd() {
+  if (!overlayAd || overlayAd.dataset.loaded) return;
+  try {
+    (window.adsbygoogle = window.adsbygoogle || []).push({});
+    overlayAd.dataset.loaded = 'true';
+  } catch {
+    // ignore ad loading errors
+  }
+}
+
+function lockRestart() {
+  restartUnlockAt = Date.now() + RESTART_DELAY_MS;
+  if (btnStart) btnStart.disabled = true;
+  if (restartTimer) clearTimeout(restartTimer);
+  restartTimer = setTimeout(() => {
+    if (!state.dead) return;
+    if (btnStart) btnStart.disabled = false;
+  }, RESTART_DELAY_MS);
+}
+
+function unlockRestart() {
+  restartUnlockAt = 0;
+  if (restartTimer) clearTimeout(restartTimer);
+  if (btnStart) btnStart.disabled = false;
+}
+
+function canRestart() {
+  return Date.now() >= restartUnlockAt;
+}
+
 function startOrRestart() {
+  if (state.dead && !canRestart()) return;
   overlay.classList.add('hidden');
+  if (overlayAd) overlayAd.style.display = 'none';
+  unlockRestart();
   state.running = true;
   state.dead = false;
   resetWorld();
@@ -414,6 +452,9 @@ function gameOver(reason = '') {
   overlay.querySelector('.sub').innerHTML =
     r + t('gameOverScore', { score: state.score, best: state.best });
   btnStart.textContent = t('btnRestart');
+  if (overlayAd) overlayAd.style.display = 'block';
+  loadOverlayAd();
+  lockRestart();
   // 랭킹 로드(백그라운드)
   fetchTopRuns(20);
 }
@@ -719,8 +760,10 @@ requestAnimationFrame(tick);
 fetchTopRuns(20);
 
 // initial overlay text
-const t = window.t || ((key, vars = {}) => key);
-overlay.querySelector('.title').textContent = t('title');
-btnStart.textContent = t('btnStart');
-
-
+// window.t는 index.html에서 이미 정의되어 있으므로 const t 선언 제거
+if (overlay && overlay.querySelector('.title')) {
+  overlay.querySelector('.title').textContent = (window.t || ((key) => key))('title');
+}
+if (btnStart) {
+  btnStart.textContent = (window.t || ((key) => key))('btnStart');
+}
