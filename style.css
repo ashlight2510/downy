@@ -359,6 +359,12 @@ canvas#c{
   min-width:0;
   text-align:left;
 }
+.footRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
 .foot .outLink{
   flex:0 0 auto;
   padding:8px 10px;
@@ -374,5 +380,6 @@ canvas#c{
   .pill{padding:7px 9px}
   .foot{flex-wrap:wrap; justify-content:center; text-align:center}
   .footText{flex:1 0 100%; text-align:center}
+  .footRight{flex:1 0 100%; justify-content:center; margin-top:8px}
 }
 

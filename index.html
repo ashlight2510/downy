@@ -99,50 +99,48 @@
 }
   </style>
   <style>
+    .footRight {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
     .lang-switch {
-      position: fixed;
-      top: 16px;
-      right: 16px;
       display: inline-flex;
       gap: 0;
       padding: 3px;
       border-radius: 999px;
-      background: rgba(7, 8, 21, 0.95);
+      background: rgba(8, 10, 24, 0.55);
       backdrop-filter: blur(10px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      z-index: 100;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(18, 247, 255, 0.25);
+      box-shadow: 0 0 16px rgba(18, 247, 255, 0.08);
     }
     .lang-switch button {
       border: none;
       background: transparent;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 12px;
+      color: rgba(234, 242, 255, 0.7);
+      font-size: 11px;
       font-weight: 700;
-      padding: 7px 14px;
+      padding: 6px 12px;
       border-radius: 999px;
       cursor: pointer;
       transition: all 0.2s ease;
-      min-width: 44px;
+      min-width: 40px;
       text-align: center;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.08em;
     }
     .lang-switch button.active {
-      background: rgba(255, 255, 255, 0.2);
-      color: #ffffff;
-      box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
+      background: rgba(18, 247, 255, 0.2);
+      color: var(--fg);
+      box-shadow: 0 0 12px rgba(18, 247, 255, 0.3);
     }
     .lang-switch button:not(.active):hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.9);
+      background: rgba(18, 247, 255, 0.1);
+      color: rgba(234, 242, 255, 0.9);
     }
   </style>
 </head>
   <body>
-  <div class="lang-switch" role="tablist" aria-label="Language switcher">
-    <button type="button" data-lang="ko" class="active">KR</button>
-    <button type="button" data-lang="en">EN</button>
-  </div>
   <div class="bg"></div>
     <div class="wrap">
       <header class="hud">
@@ -212,15 +210,21 @@
         <div class="footText" data-i18n="footerText">
           계단 1칸당 1점 · 랜덤 길이 생성 · 추락하면 사망
         </div>
-        <a
-          class="outLink"
-          href="https://funnyfunny.cloud/"
-          target="_blank"
-          rel="noopener noreferrer"
-          data-i18n="linkOtherService"
-        >
-          다른 서비스 보기
-        </a>
+        <div class="footRight">
+          <div class="lang-switch" role="tablist" aria-label="Language switcher">
+            <button type="button" data-lang="ko" class="active">KR</button>
+            <button type="button" data-lang="en">EN</button>
+          </div>
+          <a
+            class="outLink"
+            href="https://funnyfunny.cloud/"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-i18n="linkOtherService"
+          >
+            다른 서비스 보기
+          </a>
+        </div>
       </footer>
     </div>
 
